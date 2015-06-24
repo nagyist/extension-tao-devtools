@@ -8,6 +8,7 @@
 namespace oat\taoDevTools\actions;
 
 use ZipArchive;
+use Jig\Utils\FsUtils;
 
 class FontConversion extends \tao_actions_CommonModule
 {
@@ -151,6 +152,9 @@ class FontConversion extends \tao_actions_CommonModule
         if (empty($_FILES['content']['type'])) {
             $finfo                     = finfo_open(FILEINFO_MIME_TYPE);
             $_FILES['content']['type'] = finfo_file($finfo, $_FILES['content']['tmp_name']);
+            if(in_array($_FILES['content']['type'], array('application/octet-stream', 'text-plain'))){
+                $_FILES['content']['type'] = FsUtils::getMimeTypeByExtension($_FILES['content']['name']);
+            }
         }
 
         if (!$_FILES['content']['type'] || preg_match('#application\/(x-?)?zip(-compressed)?#', $_FILES['content']['type']) !== 1) {
