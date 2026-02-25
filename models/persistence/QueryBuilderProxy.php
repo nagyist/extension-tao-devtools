@@ -21,8 +21,9 @@
 
 namespace oat\taoDevTools\models\persistence;
 
-use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Result;
 
 class QueryBuilderProxy extends QueryBuilder
 {
@@ -37,11 +38,32 @@ class QueryBuilderProxy extends QueryBuilder
 
     /**
      * {@inheritDoc}
+     */
+    public function executeQuery(): Result
+    {
+        $this->counter->count(__FUNCTION__, $this->getSQL());
+
+        return parent::executeQuery();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function executeStatement(): int
+    {
+        $this->counter->count(__FUNCTION__, $this->getSQL());
+
+        return parent::executeStatement();
+    }
+
+    /**
+     * {@inheritDoc}
      * @see \Doctrine\DBAL\Query\QueryBuilder::execute()
      */
     public function execute()
     {
         $this->counter->count(__FUNCTION__, '');
+
         return parent::execute();
     }
 }

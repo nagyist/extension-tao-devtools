@@ -54,13 +54,13 @@ class SqlProxyDriverTest extends TestCase
         $queryBuilder = $persistence->getPlatForm()->getQueryBuilder();
         $queryBuilder->select('1');
         $this->assertEquals(2, $counter->getCount());
-        $persistence->query($queryBuilder->getSQL())->fetchAll();
+        $persistence->query($queryBuilder->getSQL())->fetchAllAssociative();
         $this->assertEquals(3, $counter->getCount());
         // execute query builder
         $queryBuilder = $persistence->getPlatForm()->getQueryBuilder();
         $queryBuilder->select('1');
         $this->assertEquals(3, $counter->getCount());
-        $queryBuilder->execute();
+        $queryBuilder->executeQuery();
         $this->assertEquals(4, $counter->getCount());
     }
 

@@ -21,7 +21,8 @@
 
 namespace oat\taoDevTools\models\persistence;
 
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DBALException;
+use Doctrine\DBAL\Result;
 use PDO;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorAwareTrait;
@@ -57,7 +58,7 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
 
         unset($params['persistenceId']);
 
-        return new \common_persistence_SqlPersistence($params, $this);
+        return new \common_persistence_SqlPersistence($this, $params);
     }
 
     /**
@@ -66,10 +67,10 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
      * @param array $params
      * @param array $types
      *
-     * @return mixed
+     * @return Result
      * @throws DBALException
      */
-    public function query($statement, $params, array $types = [])
+    public function query(string $statement, array $params = [], array $types = []): Result
     {
         $this->counter->count(__FUNCTION__, $statement);
         try {

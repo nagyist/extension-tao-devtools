@@ -58,8 +58,8 @@
     "symfony/process": "^5.0",
     "ccampbell/chromephp": "~4.1.0",
     "nette/php-generator": "~3.3.0",
-    "oat-sa/generis": ">=16.2.2",
-    "oat-sa/tao-core": ">=54.49.5",
+    "oat-sa/generis": ">=17.0.0",
+    "oat-sa/tao-core": ">=56.0.0",
     "oat-sa/extension-tao-group": ">=7.0.0",
     "oat-sa/extension-tao-item": ">=11.0.0",
     "oat-sa/extension-tao-itemqti": ">=28.2.0"
