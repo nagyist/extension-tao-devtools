@@ -72,9 +72,11 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
      */
     public function query(string $statement, array $params = [], array $types = []): Result
     {
-        $this->counter->count(__FUNCTION__, $statement);
         try {
-            return $this->persistence->query($statement, $params, $types);
+            $result = $this->persistence->query($statement, $params, $types);
+            $this->counter->count(__FUNCTION__, $statement);
+
+            return $result;
         } catch (DBALException $e) {
             \common_Logger::w('Failed: ' . $statement);
             throw $e;
@@ -92,9 +94,11 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
      */
     public function exec($statement, $params, array $types = [])
     {
-        $this->counter->count(__FUNCTION__, $statement);
         try {
-            return $this->persistence->exec($statement, $params, $types);
+            $result = $this->persistence->exec($statement, $params, $types);
+            $this->counter->count(__FUNCTION__, $statement);
+
+            return $result;
         } catch (DBALException $e) {
             \common_Logger::w('Failed: ' . $statement);
             throw $e;
@@ -120,7 +124,7 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
             throw $e;
         }
     }
-    
+
     /**
      * Proxy to insertMultiple
      * @param string $tableName

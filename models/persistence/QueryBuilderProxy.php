@@ -41,9 +41,10 @@ class QueryBuilderProxy extends QueryBuilder
      */
     public function executeQuery(): Result
     {
+        $result = parent::executeQuery();
         $this->counter->count(__FUNCTION__, $this->getSQL());
 
-        return parent::executeQuery();
+        return $result;
     }
 
     /**
@@ -51,19 +52,19 @@ class QueryBuilderProxy extends QueryBuilder
      */
     public function executeStatement(): int
     {
+        $result = parent::executeStatement();
         $this->counter->count(__FUNCTION__, $this->getSQL());
 
-        return parent::executeStatement();
+        return $result;
     }
 
     /**
      * {@inheritDoc}
+     * Delegates to parent only; counting is done in executeQuery()/executeStatement() to avoid double-counting.
      * @see \Doctrine\DBAL\Query\QueryBuilder::execute()
      */
     public function execute()
     {
-        $this->counter->count(__FUNCTION__, '');
-
         return parent::execute();
     }
 }
