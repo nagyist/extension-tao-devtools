@@ -32,7 +32,7 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
 {
     use ServiceLocatorAwareTrait;
 
-    const OPTION_PERSISTENCE = 'persistenceId';
+    public const OPTION_PERSISTENCE = 'persistenceId';
 
     /** @var QueryCounter */
     private $counter;
@@ -50,11 +50,13 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
      *
      * @return \common_persistence_Persistence
      */
-    function connect($id, array $params)
+    public function connect($id, array $params)
     {
         $this->counter = new QueryCounter($id);
 
-        $this->persistence = $this->getServiceLocator()->get(PersistenceManager::class)->getPersistenceById($params['persistenceId']);
+        $this->persistence = $this->getServiceLocator()
+            ->get(PersistenceManager::class)
+            ->getPersistenceById($params['persistenceId']);
 
         unset($params['persistenceId']);
 
