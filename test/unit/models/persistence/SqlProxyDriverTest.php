@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,6 +21,7 @@
 namespace oat\taoDevTools\test\unit\models\persistence;
 
 use common_persistence_SqlPersistence;
+use Doctrine\DBAL\Exception as DBALException;
 use oat\generis\test\ServiceManagerMockTrait;
 use oat\generis\test\SqlMockTrait;
 use oat\oatbox\log\LoggerService;
@@ -54,14 +56,55 @@ class SqlProxyDriverTest extends TestCase
         $queryBuilder = $persistence->getPlatForm()->getQueryBuilder();
         $queryBuilder->select('1');
         $this->assertEquals(2, $counter->getCount());
-        $persistence->query($queryBuilder->getSQL())->fetchAll();
+        $persistence->query($queryBuilder->getSQL())->fetchAllAssociative();
         $this->assertEquals(3, $counter->getCount());
-        // execute query builder
+        // execute query builder (executeQuery)
         $queryBuilder = $persistence->getPlatForm()->getQueryBuilder();
         $queryBuilder->select('1');
         $this->assertEquals(3, $counter->getCount());
-        $queryBuilder->execute();
+        $queryBuilder->executeQuery();
         $this->assertEquals(4, $counter->getCount());
+        // execute query builder (executeStatement) – same persistence/platform path
+        $queryBuilder = $persistence->getPlatForm()->getQueryBuilder();
+        $queryBuilder->select('1');
+        $this->assertEquals(4, $counter->getCount());
+        $queryBuilder->executeStatement();
+        $this->assertEquals(5, $counter->getCount());
     }
 
+    public function testQueryFailurePropagatesExceptionAndDoesNotIncrementCounter(): void
+    {
+        $exceptionMessage = 'Simulated DBAL failure';
+        $throwingPersistence = $this->createMock(common_persistence_SqlPersistence::class);
+        $throwingPersistence
+            ->method('query')
+            ->willThrowException(new DBALException($exceptionMessage));
+
+        $persistenceManager = $this->createMock(PersistenceManager::class);
+        $persistenceManager
+            ->method('getPersistenceById')
+            ->with('memory')
+            ->willReturn($throwingPersistence);
+
+        $driver = new SqlProxyDriver();
+        $driver->setServiceLocator($this->getServiceManagerMock([
+            PersistenceManager::class => $persistenceManager,
+            'generis/log' => $this->createMock(LoggerService::class)
+        ]));
+        $persistence = $driver->connect('proxy', ['persistenceId' => 'memory']);
+        $counter = $driver->getCounter();
+        $counter->setLogger($this->createMock(LoggerService::class));
+
+        $this->assertEquals(0, $counter->getCount());
+
+        try {
+            $persistence->query('SELECT 1;');
+            $this->fail('Expected DBALException to be thrown');
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf(DBALException::class, $e);
+            $this->assertStringContainsString($exceptionMessage, $e->getMessage());
+        }
+
+        $this->assertEquals(0, $counter->getCount(), 'Counter must not be incremented when query throws');
+    }
 }
