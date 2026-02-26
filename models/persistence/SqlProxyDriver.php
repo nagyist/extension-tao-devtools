@@ -21,7 +21,8 @@
 
 namespace oat\taoDevTools\models\persistence;
 
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DBALException;
+use Doctrine\DBAL\Result;
 use PDO;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorAwareTrait;
@@ -31,7 +32,7 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
 {
     use ServiceLocatorAwareTrait;
 
-    const OPTION_PERSISTENCE = 'persistenceId';
+    public const OPTION_PERSISTENCE = 'persistenceId';
 
     /** @var QueryCounter */
     private $counter;
@@ -49,15 +50,17 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
      *
      * @return \common_persistence_Persistence
      */
-    function connect($id, array $params)
+    public function connect($id, array $params)
     {
         $this->counter = new QueryCounter($id);
 
-        $this->persistence = $this->getServiceLocator()->get(PersistenceManager::class)->getPersistenceById($params['persistenceId']);
+        $this->persistence = $this->getServiceLocator()
+            ->get(PersistenceManager::class)
+            ->getPersistenceById($params['persistenceId']);
 
         unset($params['persistenceId']);
 
-        return new \common_persistence_SqlPersistence($params, $this);
+        return new \common_persistence_SqlPersistence($this, $params);
     }
 
     /**
@@ -66,14 +69,16 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
      * @param array $params
      * @param array $types
      *
-     * @return mixed
+     * @return Result
      * @throws DBALException
      */
-    public function query($statement, $params, array $types = [])
+    public function query(string $statement, array $params = [], array $types = []): Result
     {
-        $this->counter->count(__FUNCTION__, $statement);
         try {
-            return $this->persistence->query($statement, $params, $types);
+            $result = $this->persistence->query($statement, $params, $types);
+            $this->counter->count(__FUNCTION__, $statement);
+
+            return $result;
         } catch (DBALException $e) {
             \common_Logger::w('Failed: ' . $statement);
             throw $e;
@@ -91,9 +96,11 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
      */
     public function exec($statement, $params, array $types = [])
     {
-        $this->counter->count(__FUNCTION__, $statement);
         try {
-            return $this->persistence->exec($statement, $params, $types);
+            $result = $this->persistence->exec($statement, $params, $types);
+            $this->counter->count(__FUNCTION__, $statement);
+
+            return $result;
         } catch (DBALException $e) {
             \common_Logger::w('Failed: ' . $statement);
             throw $e;
@@ -119,7 +126,7 @@ class SqlProxyDriver implements \common_persistence_sql_Driver, ServiceLocatorAw
             throw $e;
         }
     }
-    
+
     /**
      * Proxy to insertMultiple
      * @param string $tableName
